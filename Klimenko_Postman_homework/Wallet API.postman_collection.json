@@ -1,0 +1,504 @@
+{
+	"info": {
+		"_postman_id": "3c1a0aef-fd92-4705-9648-e866811fd2cf",
+		"name": "Wallet API",
+		"description": "https://developer.bitaps.com/wallet",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create wallet",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9a9e7ae0-057c-4c42-aa8d-862491ce1ab9",
+						"exec": [
+							"let responseJSON = pm.response.json();\r",
+							"pm.test(\"Wallet is created\", function () {\r",
+							"    pm.response.to.have.jsonBody('wallet_id');\r",
+							"})\r",
+							"pm.test(\"Check status\", function (){\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"Wallet_id include BTC\", function (){\r",
+							"    pm.expect(responseJSON.wallet_id).to.include(\"BTC\");\r",
+							"})\r",
+							"pm.test(\"Length of wallet_id is 53\", function (){\r",
+							"    pm.expect((responseJSON.wallet_id).length).to.equal(53);\r",
+							"})\r",
+							"\r",
+							"pm.environment.set(\"wallet_id\", responseJSON.wallet_id);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "990c47a8-b8c0-4556-93bf-bbcb4955d951",
+						"exec": [
+							"if (pm.environment.get(\"currency\") == \"btc\") {\r",
+							"    pm.environment.set(\"currency\",\"eth\");\r",
+							"}\r",
+							"else {\r",
+							"    pm.environment.set(\"currency\",\"btc\");\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}{{currency}}/testnet/v1/create/wallet",
+					"host": [
+						"{{host}}{{currency}}"
+					],
+					"path": [
+						"testnet",
+						"v1",
+						"create",
+						"wallet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create wallet payment address",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f32afcb5-01b6-4276-ac2e-65e5acbd80b0",
+						"exec": [
+							"let responseJSON = pm.response.json();\r",
+							"pm.environment.set(\"address\", responseJSON.address);\r",
+							"pm.test(\"Currency is eth\", function (){\r",
+							"    pm.expect(responseJSON.currency).to.include(\"tETH\");\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n{\r\n   \"wallet_id\": \"{{wallet_id}}\",\r\n   \"callback_link\" : \"https:test.com\",\r\n   \"confirmations\" : 6 \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}{{currency}}/testnet/v1/create/wallet/payment/address",
+					"host": [
+						"{{host}}{{currency}}"
+					],
+					"path": [
+						"testnet",
+						"v1",
+						"create",
+						"wallet",
+						"payment",
+						"address"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send payment (not work without Body)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "721542b5-c54e-444b-8edd-cc22516384b7",
+						"exec": [
+							"pm.test(\"Request without any error\", function () {\r",
+							"    pm.response.to.not.have.jsonBody(\"error_code\");\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"receivers_list\": [\r\n        {\r\n            \"address\": \"2MzUK7D7Yo2FxrBNvxi4fwb4oVhRTn7n29X\",\r\n            \"amount\": \"1\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}{{currency}}/testnet/v1/wallet/send/payment/{{wallet_id}}",
+					"host": [
+						"{{host}}{{currency}}"
+					],
+					"path": [
+						"testnet",
+						"v1",
+						"wallet",
+						"send",
+						"payment",
+						"{{wallet_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Wallet state with env",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "2d71e9be-c2ba-4b94-b6dd-0ee6b3f85043",
+						"exec": [
+							"let responseJSON = pm.response.json();\r",
+							"pm.environment.set(\"create_timestamp\", responseJSON.create_date_timestamp);\r",
+							"console.log(\"Time difference: \" + (Date.now()-responseJSON.create_date_timestamp));\r",
+							"pm.test(\"Count of wallet address\", function () {\r",
+							"     pm.expect(responseJSON.adrress_count).is.not.equal(0) \r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}{{currency}}/testnet/v1/wallet/state/{{wallet_id}}",
+					"host": [
+						"{{host}}{{currency}}"
+					],
+					"path": [
+						"testnet",
+						"v1",
+						"wallet",
+						"state",
+						"{{wallet_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Wallet transaction list",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "eccde194-28f8-4381-950d-13ad2d3ed2b7",
+						"exec": [
+							"pm.environment.set(\"Date_timestamp\", Date.now());"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "747ac40d-89de-4054-83c6-3a814a0ca402",
+						"exec": [
+							"pm.test(\"response must be valid and have a body\", function () {\r",
+							"     pm.response.to.be.ok;\r",
+							"     pm.response.to.be.withBody;\r",
+							"     pm.response.to.be.json;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}{{currency}}/testnet/v1/wallet/transactions/{{wallet_id}}?from={{create_timestamp}}&to={{Date_timestamp}}&limit=20&page=5",
+					"host": [
+						"{{host}}{{currency}}"
+					],
+					"path": [
+						"testnet",
+						"v1",
+						"wallet",
+						"transactions",
+						"{{wallet_id}}"
+					],
+					"query": [
+						{
+							"key": "from",
+							"value": "{{create_timestamp}}"
+						},
+						{
+							"key": "to",
+							"value": "{{Date_timestamp}}"
+						},
+						{
+							"key": "limit",
+							"value": "20"
+						},
+						{
+							"key": "page",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Wallet address list",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "49be0c09-bffd-40cf-b918-61f601909acc",
+						"exec": [
+							"pm.environment.set(\"Date_timestamp\", Date.now());"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "edbce909-9f7a-4864-9774-abc1ce3a4e40",
+						"exec": [
+							"pm.test(\"Response time is less than 200ms\", () => {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}{{currency}}/testnet/v1/wallet/transactions/{{wallet_id}}?from={{create_timestamp}}&to={{Date_timestamp}}&limit=20&page=5",
+					"host": [
+						"{{host}}{{currency}}"
+					],
+					"path": [
+						"testnet",
+						"v1",
+						"wallet",
+						"transactions",
+						"{{wallet_id}}"
+					],
+					"query": [
+						{
+							"key": "from",
+							"value": "{{create_timestamp}}"
+						},
+						{
+							"key": "to",
+							"value": "{{Date_timestamp}}"
+						},
+						{
+							"key": "limit",
+							"value": "20"
+						},
+						{
+							"key": "page",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Wallet address transaction list",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "04f1b0ba-f63a-4e04-81ef-785411671cc8",
+						"exec": [
+							"pm.environment.set(\"Date_timestamp\", Date.now());"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "5bbba107-0ffe-4eef-bee3-b66fa12074a2",
+						"exec": [
+							"let responseJSON = pm.response.json();\r",
+							"pm.test(\"Transactions list is not empty\", function() {\r",
+							"   pm.expect(responseJSON.transactions.tx_list).to.not.be.empty;\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}{{currency}}/testnet/v1/wallet/address/transactions/{{wallet_id}}/{{address}}?from={{create_timestamp}}&to={{Date_timestamp}}&limit=20&page=5",
+					"host": [
+						"{{host}}{{currency}}"
+					],
+					"path": [
+						"testnet",
+						"v1",
+						"wallet",
+						"address",
+						"transactions",
+						"{{wallet_id}}",
+						"{{address}}"
+					],
+					"query": [
+						{
+							"key": "from",
+							"value": "{{create_timestamp}}"
+						},
+						{
+							"key": "to",
+							"value": "{{Date_timestamp}}"
+						},
+						{
+							"key": "limit",
+							"value": "20"
+						},
+						{
+							"key": "page",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Daily wallet statistics",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "e519da85-27e2-4559-9848-239ce6deb573",
+						"exec": [
+							"pm.environment.set(\"Date_timestamp\", Date.now());"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "7d4b434e-db55-4fa3-b1b2-4c6c9fc88240",
+						"exec": [
+							"pm.test(\"Content-Type header is application/json\", function () {\r",
+							"  pm.expect(pm.response.headers.get(\"Content-Type\")).to.eql(\"application/json; charset=utf-8\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}{{currency}}/testnet/v1/wallet/daily/statistic/{{wallet_id}}?from={{create_timestamp}}&to={{Date_timestamp}}&limit=20&page=5",
+					"host": [
+						"{{host}}{{currency}}"
+					],
+					"path": [
+						"testnet",
+						"v1",
+						"wallet",
+						"daily",
+						"statistic",
+						"{{wallet_id}}"
+					],
+					"query": [
+						{
+							"key": "from",
+							"value": "{{create_timestamp}}"
+						},
+						{
+							"key": "to",
+							"value": "{{Date_timestamp}}"
+						},
+						{
+							"key": "limit",
+							"value": "20"
+						},
+						{
+							"key": "page",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "7c3ef663-e2c4-42bd-853c-842d29ab2b0f",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "3367bbe9-3c1b-435a-ae96-83d175cfc67d",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
